@@ -1,4 +1,4 @@
-# heart_disease_xgb_streamlit.py
+
 import pandas as pd
 import streamlit as st
 from sklearn.model_selection import train_test_split
@@ -8,9 +8,6 @@ from sklearn.metrics import accuracy_score, confusion_matrix
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-# ===============================
-# Page Config
-# ===============================
 st.set_page_config(
     page_title="Heart Disease Predictor",
     page_icon="❤️",
@@ -18,36 +15,26 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-st.title("❤️ Heart Disease Prediction App")
+st.title(" Heart Disease Prediction App")
 st.markdown(
     "This app predicts the likelihood of **heart disease** based on patient clinical data. "
     "Adjust the parameters in the sidebar and see the prediction in real-time."
 )
 
-# ===============================
-# Load Dataset & Prepare Model
-# ===============================
 @st.cache_data
 def load_model():
-    df = pd.read_csv("heart.csv")  # make sure your CSV matches this name
-    # Columns in the dataset
-    # ['Age', 'Sex', 'ChestPainType', 'RestingBP', 'Cholesterol', 'FastingBS',
-    #  'RestingECG', 'MaxHR', 'ExerciseAngina', 'Oldpeak', 'ST_Slope', 'HeartDisease']
+    df = pd.read_csv("heart.csv")  
+
 
     target_col = "HeartDisease"
     X = pd.get_dummies(df.drop(target_col, axis=1), drop_first=True)
     y = df[target_col]
-
-    # Scale features
     scaler = StandardScaler()
     X_scaled = scaler.fit_transform(X)
 
-    # Train-test split
     X_train, X_test, y_train, y_test = train_test_split(
         X_scaled, y, test_size=0.2, random_state=42
     )
-
-    # XGBoost Classifier
     model = XGBClassifier(use_label_encoder=False, eval_metric="logloss", random_state=42)
     model.fit(X_train, y_train)
 
@@ -55,9 +42,6 @@ def load_model():
 
 model, scaler, X_columns, y, X_test, y_test = load_model()
 
-# ===============================
-# Sidebar: User Input
-# ===============================
 st.sidebar.header("Patient Data Input")
 st.sidebar.markdown("Adjust the features below to predict heart disease.")
 
@@ -92,30 +76,24 @@ def user_input_features():
 
 input_df = user_input_features()
 
-# Encode categorical features
 input_encoded = pd.get_dummies(input_df)
 input_encoded = input_encoded.reindex(columns=X_columns.columns, fill_value=0)
 input_scaled = scaler.transform(input_encoded)
 
-# ===============================
-# Prediction
-# ===============================
 prediction = model.predict(input_scaled)
 prediction_proba = model.predict_proba(input_scaled)
 
 st.subheader("Prediction Result")
 if prediction[0] == 1:
-    st.error("⚠️ Heart Disease Detected!")
+    st.error("Heart Disease Detected!")
 else:
-    st.success("✅ No Heart Disease Detected!")
+    st.success("No Heart Disease Detected!")
 
 st.subheader("Prediction Probability")
 st.write(f"Probability of No Disease: {prediction_proba[0][0]*100:.2f}%")
 st.write(f"Probability of Disease: {prediction_proba[0][1]*100:.2f}%")
 
-# ===============================
-# Model Evaluation
-# ===============================
+
 st.subheader("Model Performance on Test Data")
 y_pred = model.predict(X_test)
 st.write(f"**Accuracy:** {accuracy_score(y_test, y_pred)*100:.2f}%")
@@ -126,7 +104,6 @@ ax.set_xlabel("Predicted")
 ax.set_ylabel("Actual")
 st.pyplot(fig)
 
-# Feature Importance
 st.subheader("Feature Importance")
 importances = model.feature_importances_
 feat_importance = pd.Series(importances, index=X_columns.columns).sort_values(ascending=False)
